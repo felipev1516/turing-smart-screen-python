@@ -170,7 +170,10 @@ if __name__ == "__main__":
       # Post IP address
       try:
         import socket
-        ip_address = socket.gethostbyname(socket.gethostname()) # Get the local IP address
+        gw = os.popen("ip -4 route show default").read().split()
+	s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+	s.connect((gw[2],0))
+	ip_address = s.getsockname()[0] # Get the local IP address
         logger.info(f"IP Address: {ip_address}")
         lcd_comm.DisplayText(text=f"IP: {ip_address}", 
                               x=260, y=30,
@@ -218,12 +221,6 @@ if __name__ == "__main__":
       # If temperature is None or 0, set it to 0
       # This is to avoid displaying an incorrect temperature value
       # If temperature is 0, it means the temperature could not be read
-      # or the file does not exist
-      # or the temperature is not available
-      # or the temperature is not supported by the system
-      # or the temperature is not supported by the hardware
-      # or the temperature is not supported by the kernel
-      # or the temperature is not supported by the driver
       if tempature is None or tempature == 0:
           logger.error("Failed to read CPU temperature")
           tempature = 0
@@ -239,9 +236,9 @@ if __name__ == "__main__":
           background_image=background,
           bar_color=(255, 255, 255),
           clockwise=True,
-          text=f"{tempature}°C",
+          text=f"{tempature:.1f}°C",
           font=FONT_PATH,
-          font_size=25,
+          font_size=20,
           font_color=(255, 255, 255),
           with_text=True,
       )
