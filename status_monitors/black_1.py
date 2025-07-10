@@ -169,6 +169,7 @@ if __name__ == "__main__":
     if os.name == 'posix':
       # Post IP address
       try:
+        # Thanks to DougieLAwson @ https://forums.raspberrypi.com/viewtopic.php?t=79936
         import socket
         gw = os.popen("ip -4 route show default").read().split()
         s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -259,7 +260,7 @@ if __name__ == "__main__":
           clockwise=True,
           text=f"{ram_usage}%",
           font=FONT_PATH,
-          font_size=25,
+          font_size=20,
           font_color=(255, 255, 255),
           with_text=True,
       )
