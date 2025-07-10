@@ -218,6 +218,45 @@ class LcdComm(ABC):
             image_height: int = 0
     ):
         pass
+    #Thanks to Gihhub user @Gihh for the DisplayStatusCircle function
+    def DisplayStatusCircle(self, x: int, y: int, width: int, height: int, radius: int, status: bool,background_image: Optional[str] = None):
+        # Display a status circle at given coordinates
+        # If status is True, display a green circle, else display a red circle
+        assert x <= self.get_width(), 'Circle X coordinate must be <= display width'
+        assert y <= self.get_height(), 'Circle Y coordinate must be <= display height'
+        assert x + width <= self.get_width(), 'Circle width exceeds display width'
+        assert y + height <= self.get_height(), 'Circle height exceeds display height'
+
+        color = (0, 255, 0) if status else (255, 0, 0)
+        # Create a new image with transparent background
+        if background_image:
+            # A bitmap is created from provided background image
+            image = self.open_image(background_image)
+            # Crop bitmap to keep only the status circle background
+            image = image.crop(box=(x, y, x + width, y + height))
+        else:
+            image = Image.new('RGB', (width, height), (255, 255, 255))
+        
+        if radius <= 0:
+            radius = min(width, height) // 2
+        
+        # Ensure x and y are valid
+        assert x >= 0, f'Circle X coordinate {x} must be >= 0'
+        assert y >= 0, f'Circle Y coordinate {y} must be >= 0'
+        # Ensure width and height are valid
+        assert width > 0, f'Circle width {width} must be > 0'
+        assert height > 0, f'Circle height {height} must be > 0'
+        # Ensure circle fits in the image
+        assert x + width <= self.get_width(), f'Circle X coordinate {x} + width {width} must be <= display width {self.get_width()}'
+        assert y + height <= self.get_height(), f'Circle Y coordinate {y} + height {height} must be <= display height {self.get_height()}'
+        assert radius <= min(width, height) // 2, f'Circle radius {radius} must be <= half of width {width} and height {height}'
+        assert radius > 0, f'Circle radius {radius} must be > 0'
+        
+        # Draw a circle with the given color
+        draw = ImageDraw.Draw(image)        
+        draw.ellipse([0, 0, width - 1, height - 1], fill=color, outline=None)
+        
+        self.DisplayPILImage(image, x, y)
 
     def DisplayBitmap(self, bitmap_path: str, x: int = 0, y: int = 0, width: int = 0, height: int = 0):
         image = self.open_image(bitmap_path)

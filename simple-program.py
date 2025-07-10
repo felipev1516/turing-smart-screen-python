@@ -111,7 +111,7 @@ if __name__ == "__main__":
     lcd_comm.SetBackplateLedColor(led_color=(255, 255, 255))
 
     # Set orientation (screen starts in Portrait)
-    lcd_comm.SetOrientation(orientation=Orientation.LANDSCAPE)
+    lcd_comm.SetOrientation(orientation=Orientation.REVERSE_LANDSCAPE)
 
     # Define background picture
     background = f"res/backgrounds/example_{lcd_comm.get_width()}x{lcd_comm.get_height()}.png"
@@ -150,7 +150,15 @@ if __name__ == "__main__":
                              font_size=20,
                              font_color=(255, 0, 0),
                              background_image=background)
-
+        lcd_comm.DisplayStatusCircle(
+                                     x=300, 
+                                     y=260, 
+                                     width=30,
+                                     height=30,
+                                     radius=15,
+                                     status=False,
+                                     background_image=background)
+        
         lcd_comm.DisplayProgressBar(10, 40,
                                     width=140, height=30,
                                     min_value=0, max_value=100, value=bar_value,
