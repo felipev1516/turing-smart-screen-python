@@ -167,6 +167,27 @@ if __name__ == "__main__":
                          font_color=(255, 255, 255),
                          background_image=background)
     if os.name == 'posix':
+      # Post IP address
+      try:
+        import socket
+        ip_address = socket.gethostbyname(socket.gethostname()) # Get the local IP address
+        logger.info(f"IP Address: {ip_address}")
+        lcd_comm.DisplayText(text=f"IP: {ip_address}", 
+                              x=260, y=30,
+                              font=FONT_PATH,
+                              font_size=20,
+                              font_color=(255, 255, 255),
+                              background_image=background)
+      except Exception as e:
+        logger.error(f"Failed to get IP address: {e}")
+        ip_address = "0.0.0.0"  # Default IP address
+        lcd_comm.DisplayText(text=f"IP: {ip_address}", 
+                              x=260, y=30, 
+                              font=FONT_PATH,
+                              font_size=20,
+                              font_color=(255, 255, 255),
+                              background_image=background)
+
       # CPU Usage and RAM usage for POSIX-compliant systems
       logger.info("Running on a POSIX-compliant system (Linux, macOS, etc.)")
       CPU_Usage = psutil.cpu_percent(interval=1)
@@ -187,13 +208,29 @@ if __name__ == "__main__":
       )
       # Get CPU temperature
       logger.info("Reading CPU temperature")
-      # Note: This may require root privileges or specific permissions to access thermal zone files  
-      tempature = os.system("cat /sys/class/thermal/thermal_zone0/temp")
-      if tempature != 0:
-          logger.error("Failed to read temperature from thermal zone")
+      tempature = os.popen("cat /sys/class/thermal/thermal_zone0/temp").read()
+      try:
+          tempature = int(tempature.strip())  # Read temperature from the file 
+      except ValueError:
+          logger.error("Failed to convert CPU temperature to integer")
+          tempature = None
+      # Check if temperature is None or 0
+      # If temperature is None or 0, set it to 0
+      # This is to avoid displaying an incorrect temperature value
+      # If temperature is 0, it means the temperature could not be read
+      # or the file does not exist
+      # or the temperature is not available
+      # or the temperature is not supported by the system
+      # or the temperature is not supported by the hardware
+      # or the temperature is not supported by the kernel
+      # or the temperature is not supported by the driver
+      if tempature is None or tempature == 0:
+          logger.error("Failed to read CPU temperature")
+          tempature = 0
       else:
           tempature = tempature / 1000.0  # Convert to Celsius
-          logger.info(f"Temperature: {tempature}°C")
+      
+      logger.info(f"Temperature: {tempature}°C")  
       
       # Print CPU Temperature in the radial progress bar
       lcd_comm.DisplayRadialProgressBar(155,200,40,8,
