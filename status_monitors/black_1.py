@@ -171,9 +171,9 @@ if __name__ == "__main__":
       try:
         import socket
         gw = os.popen("ip -4 route show default").read().split()
-	s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-	s.connect((gw[2],0))
-	ip_address = s.getsockname()[0] # Get the local IP address
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        s.connect((gw[2],0))
+        ip_address = s.getsockname()[0] # Get the local IP address
         logger.info(f"IP Address: {ip_address}")
         lcd_comm.DisplayText(text=f"IP: {ip_address}", 
                               x=260, y=30,
