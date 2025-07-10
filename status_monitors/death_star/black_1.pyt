@@ -1,3 +1,5 @@
+
+
 import os
 import signal
 import sys
@@ -6,26 +8,20 @@ import datetime
 import psutil
 import pathlib
 
-# Use os.path.abspath(os.path.dirname(__file__)) or sys.path[0]
-PATH = os.path.join(f'{os.path.abspath(os.path.dirname(__file__))}','../../')
-sys.path.append(PATH)
 
-'''for path in sys.path:
-	print(path)'''
+sys.path.append('./{os.path.abspath(__file__)}/../../')
+print('./{os.path.abspath(__file__)}/../../')
 
 from library.lcd.lcd_comm_rev_a import LcdCommRevA, Orientation
 from library.lcd.lcd_simulated import LcdSimulated
 
-from library.log import logger
+from log import logger
 from PIL import ImageFont
 
 COM_PORT = "AUTO"  # Set your COM port e.g. COM3 for Windows, /dev/ttyACM0 for Linux, etc. or "AUTO" for auto-discovery
 REVISION = "A"  # Display revision: A for Turing 3.5" and UsbPCMonitor 3.5"/5"
 WIDTH, HEIGHT = 320, 480  # Display width & height in pixels for portrait
-FONT_PATH = os.path.join(os.path.dirname(__file__),'../../res/fonts/Ubuntu/Ubuntu-Bold.ttf')  # Path to the font file
-BACKGROUND_PATH = os.path.join(os.path.dirname(__file__),'death_star_480x320.png')
-DOCKER_IMAGE_PATH = f'{os.path.dirname(__file__)}/docker_logo_50x50.png'
-
+FONT_PATH = "./../../res/fonts/Ubuntu/Ubuntu-Bold.ttf"  # Path to the font file
 #FONT_PATH = "./../res/fonts/roboto/Roboto-Bold.ttf"
 #FONT_PATH = "Ubuntu-Bold.ttf"
 assert WIDTH <= HEIGHT, "Indicate display width/height for PORTRAIT orientation: width <= height"
@@ -67,7 +63,7 @@ if __name__ == "__main__":
   lcd_comm.SetOrientation(orientation=Orientation.REVERSE_LANDSCAPE)
 
   # Define background picture
-  background = BACKGROUND_PATH
+  background = f"death_star_{lcd_comm.get_width()}x{lcd_comm.get_height()}.png"
 
   # Display Background image
   logger.debug("setting background picture")
@@ -110,7 +106,7 @@ if __name__ == "__main__":
       background_image=background,
       bar_color=(255, 255, 255),
       clockwise=True,
-      text=f"--%",
+      text=f"50%",
       font=FONT_PATH,
       font_size=25,
       font_color=(255, 255, 255),
@@ -133,7 +129,7 @@ if __name__ == "__main__":
       background_image=background,
       bar_color=(255, 255, 255),
       clockwise=True,
-      text=f"--°C",
+      text=f"50°C",
       font=FONT_PATH,
       font_size=25,
       font_color=(255, 255, 255),
@@ -153,7 +149,7 @@ if __name__ == "__main__":
       background_image=background,
       bar_color=(255, 255, 255),
       clockwise=True,
-      text=f"--%",
+      text=f"50%",
       font=FONT_PATH,
       font_size=25,
       font_color=(255, 255, 255),
@@ -164,7 +160,7 @@ if __name__ == "__main__":
   lcd_comm.DisplayStatusCircle(21,255, 30, 30, 15, status=True,
                                background_image=background)
   #display small image
-  lcd_comm.DisplayBitmap(DOCKER_IMAGE_PATH, x=60, y=245, width=50, height=50)
+  lcd_comm.DisplayBitmap("./docker_logo_50x50.png", x=60, y=245, width=50, height=50)
   
   while not stop:
     # Update the current time every second
