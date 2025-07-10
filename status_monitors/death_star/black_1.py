@@ -8,19 +8,18 @@ import datetime
 import psutil
 
 
-sys.path.append('~/Downloads/turing-smart-screen-python/library/lcd')
+sys.path.insert(1,'~/Downloads/turing-smart-screen-python/')
 
-from lcd_comm_rev_a import LcdCommRevA, Orientation
-from lcd_simulated import LcdSimulated
+from library.lcd.lcd_comm_rev_a import LcdCommRevA, Orientation
+from library.lcd.lcd_simulated import LcdSimulated
 
-sys.path.append('~/Downloads/turing-smart-screen-python/library/')
 from log import logger
 from PIL import ImageFont
 
 COM_PORT = "AUTO"  # Set your COM port e.g. COM3 for Windows, /dev/ttyACM0 for Linux, etc. or "AUTO" for auto-discovery
 REVISION = "A"  # Display revision: A for Turing 3.5" and UsbPCMonitor 3.5"/5"
 WIDTH, HEIGHT = 320, 480  # Display width & height in pixels for portrait
-FONT_PATH = "./../res/fonts/Ubuntu/Ubuntu-Bold.ttf"  # Path to the font file
+FONT_PATH = "./../../res/fonts/Ubuntu/Ubuntu-Bold.ttf"  # Path to the font file
 #FONT_PATH = "./../res/fonts/roboto/Roboto-Bold.ttf"
 #FONT_PATH = "Ubuntu-Bold.ttf"
 assert WIDTH <= HEIGHT, "Indicate display width/height for PORTRAIT orientation: width <= height"
