@@ -6,7 +6,7 @@ import datetime
 import psutil
 
 
-sys.path.append('../')
+sys.path.append('./$(pwd)/../')
 
 from library.lcd.lcd_comm_rev_a import LcdCommRevA, Orientation
 from library.lcd.lcd_simulated import LcdSimulated
