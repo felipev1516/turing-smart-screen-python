@@ -3,6 +3,7 @@ import signal
 import sys
 import time
 import datetime
+import psutil
 
 
 sys.path.append('../')
@@ -155,43 +156,168 @@ if __name__ == "__main__":
                                background_image=background)
   #display small image
   lcd_comm.DisplayBitmap("./docker_logo_50x50.png", x=60, y=245, width=50, height=50)
-  '''
-  if os.name == 'posix':
-    logger.info("Running on a POSIX-compliant system (Linux, macOS, etc.)")
-    tempature = os.system("cat /sys/class/thermal/thermal_zone0/temp")
-    if tempature != 0:
-        logger.error("Failed to read temperature from thermal zone")
-    else:
-        tempature = tempature / 1000.0  # Convert to Celsius
-        logger.info(f"Temperature: {tempature}°C")
-    
-    ram = os.popen("free -m").readlines()[1].split()[1:4]
-    total_ram = int(ram[0])  # Total RAM in MB
-    used_ram = int(ram[1])   # Used RAM in MB
-    free_ram = int(ram[2])   # Free RAM in MB
-    logger.info(f"RAM: Total: {total_ram}MB, Used: {used_ram}MB, Free: {free_ram}MB")
+  
+  while not stop:
+    # Update the current time every second
+    current_time = datetime.datetime.now().strftime("%Y-%m-%d %I:%M %p")
+    lcd_comm.DisplayText(text=current_time,
+                         x=21, y=30,
+                         font=FONT_PATH,
+                         font_size=20,
+                         font_color=(255, 255, 255),
+                         background_image=background)
+    if os.name == 'posix':
+      # CPU Usage and RAM usage for POSIX-compliant systems
+      logger.info("Running on a POSIX-compliant system (Linux, macOS, etc.)")
+      CPU_Usage = psutil.cpu_percent(interval=1)
+      logger.info(f"CPU Usage: {CPU_Usage}%")
+      
+      # Print CPU Usage in the radial progress bar
+      lcd_comm.DisplayRadialProgressBar(155,105,40,4,
+          angle_start=135, angle_end=405,
+          min_value=0, max_value=100, value=CPU_Usage,angle_sep=0,
+          background_image=background,
+          bar_color=(255, 255, 255),
+          clockwise=True,
+          text=f"{CPU_Usage}%",
+          font=FONT_PATH,
+          font_size=25,
+          font_color=(255, 255, 255),
+          with_text=True,
+      )
+      # Get CPU temperature
+      logger.info("Reading CPU temperature")
+      # Note: This may require root privileges or specific permissions to access thermal zone files  
+      tempature = os.system("cat /sys/class/thermal/thermal_zone0/temp")
+      if tempature != 0:
+          logger.error("Failed to read temperature from thermal zone")
+      else:
+          tempature = tempature / 1000.0  # Convert to Celsius
+          logger.info(f"Temperature: {tempature}°C")
+      
+      # Print CPU Temperature in the radial progress bar
+      lcd_comm.DisplayRadialProgressBar(155,200,40,8,
+          angle_start=135, angle_end=405,
+          min_value=0, max_value=100, value=tempature,
+          background_image=background,
+          bar_color=(255, 255, 255),
+          clockwise=True,
+          text=f"{tempature}°C",
+          font=FONT_PATH,
+          font_size=25,
+          font_color=(255, 255, 255),
+          with_text=True,
+      )
 
-    #CPU usage
-    cpu_usage = os.popen("top -bn1 | grep 'Cpu(s)' | sed 's/.*, *\([0-9.]*\)%* id.*/\1/' | awk '{print 100 - $1}'").read().strip()
-    logger.info(f"CPU Usage: {cpu_usage}%")
-  elif os.name == 'nt':
-    logger.info("Running on a Windows system")
-    import psutil
-    tempature = psutil.sensors_temperatures()
-    if 'coretemp' in tempature:
-        tempature = tempature['coretemp'][0].current
-        logger.info(f"Temperature: {tempature}°C")
+      #RAM usage
+      ram = psutil.virtual_memory()
+      total_ram = ram.total // (1024 * 1024)
+      used_ram = ram.used // (1024 * 1024)
+      free_ram = ram.free // (1024 * 1024)
+      logger.info(f"RAM: Total: {total_ram}MB, Used: {used_ram}MB, Free: {free_ram}MB")
+      # Print RAM Usage in the radial progress bar
+      ram_usage = ram.percent
+      lcd_comm.DisplayRadialProgressBar(395,105,40,4,
+          angle_start=135, angle_end=405,
+          min_value=0, max_value=100, value=ram_usage,angle_sep=0,
+          background_image=background,
+          bar_color=(255, 255, 255),
+          clockwise=True,
+          text=f"{ram_usage}%",
+          font=FONT_PATH,
+          font_size=25,
+          font_color=(255, 255, 255),
+          with_text=True,
+      )
+      # Determine if docker is running with a active container
+      docker_running = os.system("docker ps -q") != 0
+      if docker_running:
+          logger.info("Docker is running with active containers")
+          lcd_comm.DisplayStatusCircle(21,255, 30, 30, 15, status=True,
+                                       background_image=background)
+      else:
+          logger.info("Docker is not running or has no active containers")
+          lcd_comm.DisplayStatusCircle(21,255, 30, 30, 15, status=False,
+                                       background_image=background)
+    elif os.name == 'nt':
+      # CPU Usage and RAM usage for Windows systems
+      logger.info("Running on a Windows system")
+      CPU_Usage = psutil.cpu_percent(interval=1)
+      logger.info(f"CPU Usage: {CPU_Usage}%")
+      # Print CPU Usage in the radial progress bar
+      lcd_comm.DisplayRadialProgressBar(155,105,40,4,
+          angle_start=135, angle_end=405,
+          min_value=0, max_value=100, value=CPU_Usage,angle_sep=0,
+          background_image=background,
+          bar_color=(255, 255, 255),
+          clockwise=True,
+          text=f"{CPU_Usage}%",
+          font=FONT_PATH,
+          font_size=25,
+          font_color=(255, 255, 255),
+          with_text=True,
+      )
+      # Get CPU temperature
+      logger.info("Reading CPU temperature")
+      try:
+          import wmi
+          c = wmi.WMI(namespace="root\\wmi")
+          temperature_info = c.MSAcpi_ThermalZoneTemperature()[0]
+          tempature = (temperature_info.CurrentTemperature / 10.0) - 273.15  # Convert to Celsius
+          logger.info(f"Temperature: {tempature}°C")
+      except Exception as e:
+          logger.error(f"Failed to read CPU temperature: {e}")
+          tempature = 0.0
+      # Print CPU Temperature in the radial progress bar
+      lcd_comm.DisplayRadialProgressBar(155,200,40,8,
+          angle_start=135, angle_end=405,
+          min_value=0, max_value=100, value=tempature,
+          background_image=background,
+          bar_color=(255, 255, 255),
+          clockwise=True,
+          text=f"{tempature}°C",
+          font=FONT_PATH,
+          font_size=25,
+          font_color=(255, 255, 255),
+          with_text=True,
+      )
+      # RAM usage
+      ram = psutil.virtual_memory()
+      total_ram = ram.total // (1024 * 1024)
+      used_ram = ram.used // (1024 * 1024)
+      free_ram = ram.free // (1024 * 1024)
+      logger.info(f"RAM: Total: {total_ram}MB, Used: {used_ram}MB, Free: {free_ram}MB")
+      # Print RAM Usage in the radial progress bar
+      ram_usage = ram.percent
+      lcd_comm.DisplayRadialProgressBar(395,105,40,4,
+          angle_start=135, angle_end=405,
+          min_value=0, max_value=100, value=ram_usage,angle_sep=0,
+          background_image=background,
+          bar_color=(255, 255, 255),
+          clockwise=True,
+          text=f"{ram_usage}%",
+          font=FONT_PATH,
+          font_size=25,
+          font_color=(255, 255, 255),
+          with_text=True,
+      )
+      # Determine if docker is running with a active container
+      docker_running = os.system("docker ps -q") != 0
+      if docker_running:
+          logger.info("Docker is running with active containers")
+          lcd_comm.DisplayStatusCircle(21,255, 30, 30, 15, status=True,
+                                       background_image=background)
+      else:
+          logger.info("Docker is not running or has no active containers")
+          lcd_comm.DisplayStatusCircle(21,255, 30, 30, 15, status=False,
+                                       background_image=background)
     else:
-        logger.error("Temperature sensor not found")
+      logger.error(f"Unsupported OS: {os.name}. Only POSIX-compliant systems and Windows are supported.")
+      sys.exit(1)
+      break
+    # Sleep for a second before the next update
+    logger.debug("Sleeping for 1 second before next update")
+    time.sleep(1)
 
-    ram = psutil.virtual_memory()
-    total_ram = ram.total // (1024 * 1024)  # Convert to MB
-    used_ram = ram.used // (1024 * 1024)     # Convert to MB
-    free_ram = ram.free // (1024 * 1024)     # Convert to MB
-    logger.info(f"RAM: Total: {total_ram}MB, Used: {used_ram}MB, Free: {free_ram}MB")
-  else:
-    logger.error("Unsupported operating system. This script is designed for POSIX-compliant systems or Windows.")
-    sys.exit(1)
-    '''
    # Close serial connection at exit
   lcd_comm.closeSerial()
